@@ -246,7 +246,7 @@ mod tests {
             },
         ];
 
-        let mt = MarkdownTable::new(vec!["Hoi".to_string(), "Bye".to_string()], dd).unwrap();
+        let mt = MarkdownTable::new(Some(vec!["Hoi".to_string(), "Bye".to_string()]), dd).unwrap();
 
         println!("{}", mt);
     }
