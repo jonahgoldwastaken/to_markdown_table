@@ -40,14 +40,16 @@ pub enum MarkdownTableError {
 type Result<T> = std::result::Result<T, MarkdownTableError>;
 
 pub struct MarkdownTable {
-    header: TableRow,
+    header: Option<TableRow>,
     rows: Vec<TableRow>,
 }
 
 impl std::fmt::Display for MarkdownTable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.fmt_line(f, &|col, _len| self.header.0[col].clone())?;
-        self.fmt_line(f, &|_col, len| "-".repeat(len))?;
+        if let Some(ref header) = self.header {
+            self.fmt_line(f, &|col, _len| header.0[col].clone())?;
+            self.fmt_line(f, &|_col, len| "-".repeat(len))?;
+        }
 
         for row in &self.rows {
             self.fmt_line(f, &|col, _len| row.0[col].clone())?;
@@ -58,12 +60,18 @@ impl std::fmt::Display for MarkdownTable {
 }
 
 impl MarkdownTable {
-    pub fn new(header: impl Into<TableRow>, rows: Vec<impl Into<TableRow>>) -> Result<Self> {
-        let header = header.into();
+    pub fn new(
+        header: Option<impl Into<TableRow>>,
+        rows: Vec<impl Into<TableRow>>,
+    ) -> Result<Self> {
+        let header = header.map(|v| v.into());
         let rows: Vec<TableRow> = rows.into_iter().map(|v| v.into()).collect();
 
         for row in &rows {
-            Self::validate_row_length(&header, row)?;
+            Self::validate_row_length(
+                &header.clone().or_else(|| Some(rows[0].clone())).unwrap(),
+                row,
+            )?;
         }
 
         Ok(Self { header, rows })
@@ -71,14 +79,25 @@ impl MarkdownTable {
 
     pub fn add_row(&mut self, row: impl Into<TableRow>) -> Result<()> {
         let row = row.into();
-        Self::validate_row_length(&self.header, &row)?;
+        Self::validate_row_length(
+            &self
+                .header
+                .clone()
+                .or_else(|| Some(self.rows[0].clone()))
+                .unwrap(),
+            &row,
+        )?;
         self.rows.push(row);
 
         Ok(())
     }
 
     fn cols(&self) -> usize {
-        self.header.0.len()
+        if let Some(ref header) = self.header {
+            header.0.len()
+        } else {
+            self.rows[0].0.len()
+        }
     }
 
     fn col_len(&self, col: usize) -> Option<usize> {
@@ -93,10 +112,14 @@ impl MarkdownTable {
                 }
             });
 
-            if col_len > self.header.0[col].len() {
-                Some(col_len)
+            if let Some(ref header) = self.header {
+                if col_len > header.0[col].len() {
+                    Some(col_len)
+                } else {
+                    Some(header.0[col].len())
+                }
             } else {
-                Some(self.header.0[col].len())
+                Some(col_len)
             }
         }
     }
@@ -125,6 +148,7 @@ impl MarkdownTable {
     }
 }
 
+#[derive(Clone)]
 pub struct TableRow(Vec<String>);
 
 impl TableRow {
@@ -183,7 +207,7 @@ mod tests {
         };
 
         let mut mt =
-            MarkdownTable::new(vec!["Hoi".to_string(), "Bye".to_string()], vec![dd]).unwrap();
+            MarkdownTable::new(Some(vec!["Hoi".to_string(), "Bye".to_string()]), vec![dd]).unwrap();
 
         let res = mt.add_row(DummyRow {
             data: vec!["c".to_string(), "d".to_string()],
@@ -199,7 +223,7 @@ mod tests {
         };
 
         let mut mt =
-            MarkdownTable::new(vec!["Hoi".to_string(), "Bye".to_string()], vec![dd]).unwrap();
+            MarkdownTable::new(Some(vec!["Hoi".to_string(), "Bye".to_string()]), vec![dd]).unwrap();
 
         let res = mt.add_row(DummyRow {
             data: vec!["d".to_string()],
