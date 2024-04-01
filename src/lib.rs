@@ -21,7 +21,7 @@
 //!     User { name: "Dennis".to_string(), age: 22 }
 //! ];
 //!
-//! let table = MarkdownTable::new(vec!["Name".to_string(), "Age".to_string()], rows).unwrap();
+//! let table = MarkdownTable::new(Some(vec!["Name".to_string(), "Age".to_string()]), rows).unwrap();
 //!
 //! println!("{}", table);
 //! ```
