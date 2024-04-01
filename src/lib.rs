@@ -27,7 +27,7 @@
 //!     User { name: "Dennis".to_string(), age: 22 }
 //! ];
 //!
-//! let table = MarkdownTable::new(TableRow::new(vec!["Name".to_string(), "Age".to_string()]), rows).unwrap();
+//! let table = MarkdownTable::new(vec!["Name".to_string(), "Age".to_string()], rows).unwrap();
 //!
 //! println!("{}", table);
 //! ```
@@ -52,29 +52,11 @@ pub struct MarkdownTable {
 
 impl std::fmt::Display for MarkdownTable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for col in 0..self.cols() {
-            let len = self.col_len(col).unwrap_or(0);
-            write!(
-                f,
-                "| {text:width$} ",
-                text = self.header.0[col],
-                width = len
-            )?;
-        }
-        writeln!(f, "|")?;
-
-        for col in 0..self.cols() {
-            let len = self.col_len(col).unwrap_or(0);
-            write!(f, "| {text} ", text = "-".repeat(len))?;
-        }
-        writeln!(f, "|")?;
+        self.fmt_line(f, &|col, _len| self.header.0[col].clone())?;
+        self.fmt_line(f, &|_col, len| "-".repeat(len))?;
 
         for row in &self.rows {
-            for col in 0..self.cols() {
-                let len = self.col_len(col).unwrap_or(0);
-                write!(f, "| {text:width$} ", text = row.0[col], width = len)?;
-            }
-            writeln!(f, "|")?;
+            self.fmt_line(f, &|col, _len| row.0[col].clone())?;
         }
 
         Ok(())
@@ -82,7 +64,8 @@ impl std::fmt::Display for MarkdownTable {
 }
 
 impl MarkdownTable {
-    pub fn new(header: TableRow, rows: Vec<impl Into<TableRow>>) -> Result<Self> {
+    pub fn new(header: impl Into<TableRow>, rows: Vec<impl Into<TableRow>>) -> Result<Self> {
+        let header = header.into();
         let rows: Vec<TableRow> = rows.into_iter().map(|v| v.into()).collect();
 
         for row in &rows {
@@ -124,6 +107,18 @@ impl MarkdownTable {
         }
     }
 
+    fn fmt_line(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+        pred: &dyn Fn(usize, usize) -> String,
+    ) -> std::fmt::Result {
+        for col in 0..self.cols() {
+            let len = self.col_len(col).unwrap_or(0);
+            write!(f, "| {text:width$} ", text = pred(col, len), width = len)?;
+        }
+        writeln!(f, "|")
+    }
+
     fn validate_row_length(header: &TableRow, new_row: &TableRow) -> Result<()> {
         let header_len = header.0.len();
         let new_len = new_row.0.len();
@@ -145,6 +140,24 @@ impl TableRow {
 
     fn col_len(&self, col: usize) -> usize {
         self.0[col].len()
+    }
+}
+
+impl From<Vec<String>> for TableRow {
+    fn from(value: Vec<String>) -> Self {
+        Self::new(value)
+    }
+}
+
+impl From<Vec<usize>> for TableRow {
+    fn from(value: Vec<usize>) -> Self {
+        Self::new(value.into_iter().map(|v| v.to_string()).collect())
+    }
+}
+
+impl From<Vec<&str>> for TableRow {
+    fn from(value: Vec<&str>) -> Self {
+        Self::new(value.into_iter().map(|v| v.to_string()).collect())
     }
 }
 
@@ -175,11 +188,8 @@ mod tests {
             data: vec!["a".to_string(), "b".to_string()],
         };
 
-        let mut mt = MarkdownTable::new(
-            TableRow(vec!["Hoi".to_string(), "Bye".to_string()]),
-            vec![dd],
-        )
-        .unwrap();
+        let mut mt =
+            MarkdownTable::new(vec!["Hoi".to_string(), "Bye".to_string()], vec![dd]).unwrap();
 
         let res = mt.add_row(DummyRow {
             data: vec!["c".to_string(), "d".to_string()],
@@ -194,11 +204,8 @@ mod tests {
             data: vec!["a".to_string(), "b".to_string()],
         };
 
-        let mut mt = MarkdownTable::new(
-            TableRow(vec!["Hoi".to_string(), "Bye".to_string()]),
-            vec![dd],
-        )
-        .unwrap();
+        let mut mt =
+            MarkdownTable::new(vec!["Hoi".to_string(), "Bye".to_string()], vec![dd]).unwrap();
 
         let res = mt.add_row(DummyRow {
             data: vec!["d".to_string()],
@@ -221,8 +228,7 @@ mod tests {
             },
         ];
 
-        let mt =
-            MarkdownTable::new(TableRow(vec!["Hoi".to_string(), "Bye".to_string()]), dd).unwrap();
+        let mt = MarkdownTable::new(vec!["Hoi".to_string(), "Bye".to_string()], dd).unwrap();
 
         println!("{}", mt);
     }
