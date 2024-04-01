@@ -17,12 +17,6 @@ struct User {
     age: u32
 }
 
-impl Into<TableRow> for &User {
-    fn into(self) -> TableRow {
-        TableRow::new(vec![self.name.clone(), self.age.to_string()])
-    }
-}
-
 impl Into<TableRow> for User {
     fn into(self) -> TableRow {
         TableRow::new(vec![self.name.clone(), self.age.to_string()])
@@ -34,7 +28,7 @@ let rows = vec![
     User { name: "Dennis".to_string(), age: 22 }
 ];
 
-let table = MarkdownTable::new(TableRow::new(vec!["Name".to_string(), "Age".to_string()]), rows).unwrap();
+let table = MarkdownTable::new(vec!["Name".to_string(), "Age".to_string()], rows).unwrap();
 
 println!("{}", table);
 ```

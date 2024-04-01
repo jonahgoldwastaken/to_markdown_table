@@ -10,12 +10,6 @@
 //!     age: u32
 //! }
 //!
-//! impl Into<TableRow> for &User {
-//!     fn into(self) -> TableRow {
-//!         TableRow::new(vec![self.name.clone(), self.age.to_string()])
-//!     }
-//! }
-//!
 //! impl Into<TableRow> for User {
 //!     fn into(self) -> TableRow {
 //!         TableRow::new(vec![self.name.clone(), self.age.to_string()])
