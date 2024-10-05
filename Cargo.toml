@@ -1,6 +1,6 @@
 [package]
 name = "to_markdown_table"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "An easy way to format any data structure into a Markdown table."
 license = "MIT"
