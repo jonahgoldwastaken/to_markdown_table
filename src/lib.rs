@@ -185,6 +185,12 @@ impl From<&[&str]> for TableRow {
     }
 }
 
+impl<T: std::fmt::Display, const N: usize> From<&[&T; N]> for TableRow {
+    fn from(value: &[&T; N]) -> Self {
+        Self::new(value.iter().map(|v| v.to_string()).collect())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
