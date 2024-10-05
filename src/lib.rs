@@ -179,6 +179,12 @@ impl From<Vec<&str>> for TableRow {
     }
 }
 
+impl From<&[&str]> for TableRow {
+    fn from(value: &[&str]) -> Self {
+        Self::new(value.iter().map(|v| v.to_string()).collect())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
