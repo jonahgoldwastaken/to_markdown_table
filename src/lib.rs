@@ -161,32 +161,20 @@ impl TableRow {
     }
 }
 
-impl From<Vec<String>> for TableRow {
-    fn from(value: Vec<String>) -> Self {
-        Self::new(value)
-    }
-}
-
-impl From<Vec<usize>> for TableRow {
-    fn from(value: Vec<usize>) -> Self {
-        Self::new(value.into_iter().map(|v| v.to_string()).collect())
-    }
-}
-
-impl From<Vec<&str>> for TableRow {
-    fn from(value: Vec<&str>) -> Self {
-        Self::new(value.into_iter().map(|v| v.to_string()).collect())
-    }
-}
-
-impl From<&[&str]> for TableRow {
-    fn from(value: &[&str]) -> Self {
+impl<T: std::fmt::Display, const N: usize> From<&[T; N]> for TableRow {
+    fn from(value: &[T; N]) -> Self {
         Self::new(value.iter().map(|v| v.to_string()).collect())
     }
 }
 
-impl<T: std::fmt::Display, const N: usize> From<&[T; N]> for TableRow {
-    fn from(value: &[T; N]) -> Self {
+impl<T: std::fmt::Display> From<&[T]> for TableRow {
+    fn from(value: &[T]) -> Self {
+        Self::new(value.iter().map(|v| v.to_string()).collect())
+    }
+}
+
+impl<T: std::fmt::Display> From<Vec<T>> for TableRow {
+    fn from(value: Vec<T>) -> Self {
         Self::new(value.iter().map(|v| v.to_string()).collect())
     }
 }
